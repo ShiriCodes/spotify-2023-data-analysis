@@ -13,6 +13,7 @@ This project presents a **statistical analysis of Spotify’s top-streamed songs
 - Temporal trends and correlations  
 - Streaming success patterns  
 
+The project also includes **personal insights and product recommendations** derived from the analysis, highlighting trends and patterns in Spotify's top-streamed songs.
 All analysis was performed in **R** and organized using **RMarkdown**, producing an **interactive HTML report**.
 
 ---

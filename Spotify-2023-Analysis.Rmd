@@ -1,0 +1,949 @@
+---
+title: "Spotify 2023 Streaming Analysis"
+author: "[ShiriCodes](https://github.com/ShiriCodes/spotify-2023-data-analysis)"
+date: "2025-10-26"
+description: "Statistical analysis of Spotify's most streamed songs in 2023. Exploring danceability trends, BPM impact on popularity, energy-valence correlations, and mode effects using R statistical methods. Comprehensive data analysis with product insights for music streaming platforms."
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: lumen
+    highlight: tango
+    code_folding: hide
+---
+
+<meta name="description" content="Statistical analysis of Spotify's 2023 top streaming songs. Data-driven insights on danceability, tempo, energy, valence, and musical mode using R, ggplot2, and statistical testing.">
+<meta name="keywords" content="Spotify analysis, music data analysis, streaming statistics, R programming, data visualization, danceability analysis, BPM analysis, audio features, statistical testing, product analytics">
+<meta name="author" content="ShiriCodes">
+<meta property="og:title" content="Spotify 2023 Streaming Analysis | Data Analysis by ShiriCodes">
+<meta property="og:description" content="Statistical analysis revealing trends in Spotify's top 2023 songs: danceability patterns, tempo impact, and mood correlations with product recommendations.">
+<meta property="og:type" content="article">
+
+```{css, echo=FALSE}
+/* ====== FONTS ====== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+/* ====== PAGE BACKGROUND ====== */
+html, body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(135deg, #e8f4f8 0%, #f6f9fc 50%, #fef9f3 100%);
+  background-attachment: fixed;
+}
+
+/* ====== MAIN CONTENT (Glass Card) ====== */
+#content {
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #2b2b2b;
+  line-height: 1.7;
+  font-size: 15px;
+
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  max-width: 1000px;
+  margin: 50px auto;
+  padding: 50px 70px;
+}
+
+/* ====== HEADINGS ====== */
+h1 {
+  font-family: "Playfair Display", Georgia, serif;
+  color: #1DB954;
+  font-weight: 700;
+  font-size: 2.5em;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+h2 {
+  font-family: "Playfair Display", Georgia, serif;
+  color: #004b66;
+  font-weight: 600;
+  font-size: 1.8em;
+  border-bottom: 2px solid rgba(29, 185, 84, 0.3);
+  padding-bottom: 10px;
+  margin-top: 45px;
+  margin-bottom: 25px;
+}
+
+h3 {
+  font-family: "Inter", sans-serif;
+  color: #2b2b2b;
+  font-weight: 600;
+  font-size: 1.1em;
+  margin-top: 20px;
+}
+
+/* ====== SECTION STYLES ====== */
+.exploring, .finding, .insight, .idea {
+  border-radius: 12px;
+  padding: 18px 24px;
+  margin: 20px 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.exploring {
+  background: linear-gradient(135deg, rgba(245, 245, 250, 0.7), rgba(235, 240, 255, 0.6));
+  border-left: 4px solid #6366f1;
+}
+
+.finding {
+  background: linear-gradient(135deg, rgba(240, 249, 255, 0.7), rgba(224, 242, 254, 0.6));
+  border-left: 4px solid #0ea5e9;
+}
+
+.insight {
+  background: linear-gradient(135deg, rgba(220, 252, 231, 0.65), rgba(240, 253, 244, 0.5));
+  border-left: 4px solid #1DB954;
+  font-weight: 500;
+}
+
+.idea {
+  background: linear-gradient(135deg, rgba(255, 247, 237, 0.7), rgba(254, 243, 199, 0.6));
+  border-left: 4px solid #f59e0b;
+  font-weight: 500;
+}
+
+.exploring strong, .finding strong, .insight strong, .idea strong {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 1.05em;
+}
+
+/* ====== CODE BLOCKS ====== */
+pre {
+  background: rgba(250, 250, 250, 0.8);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  overflow-x: auto;
+  color: #1a1a1a;
+}
+
+code {
+  background: rgba(240, 240, 240, 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #1a1a1a;
+}
+
+/* ====== LINKS ====== */
+a {
+  color: #1DB954;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #1aa34a;
+  text-decoration: underline;
+}
+
+/* ====== TABLES ====== */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: rgba(255,255,255,0.7);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 20px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+th {
+  background: rgba(29, 185, 84, 0.1);
+  font-weight: 600;
+  color: #004b66;
+}
+
+tr:hover {
+  background: rgba(29, 185, 84, 0.05);
+}
+
+/* ====== TOC FLOATING PANEL ====== */
+#TOC {
+  font-family: "Inter", sans-serif;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  padding: 20px;
+}
+
+.tocify-header {
+  font-weight: 600;
+  color: #1DB954;
+  font-size: 1.1em;
+}
+
+.tocify-item {
+  color: #004b66;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+}
+
+.tocify-item:hover {
+  color: #1DB954;
+  background: rgba(29, 185, 84, 0.08);
+  border-radius: 6px;
+}
+
+/* ====== PLOTS ====== */
+img {
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  max-width: 100%;
+  height: auto;
+}
+
+/* ====== INTRO SECTION ====== */
+.intro {
+  background: linear-gradient(135deg, rgba(29, 185, 84, 0.12), rgba(30, 215, 96, 0.08));
+  border-radius: 12px;
+  padding: 25px 30px;
+  margin-bottom: 35px;
+  border-left: 4px solid #1DB954;
+}
+
+.intro p {
+  margin: 8px 0;
+  font-size: 15px;
+}
+
+/* ====== SUMMARY BOX ====== */
+.summary-box {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(240, 248, 255, 0.6));
+  border: 2px solid rgba(29, 185, 84, 0.3);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin: 40px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.summary-box h3 {
+  margin-top: 0;
+  color: #004b66;
+  font-size: 1.3em;
+  border-bottom: 2px solid rgba(29, 185, 84, 0.2);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.summary-box ul {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.summary-box li {
+  margin: 10px 0;
+  line-height: 1.7;
+}
+
+.summary-box strong {
+  color: #004b66;
+  font-weight: 600;
+}
+
+/* ====== RESPONSIVE DESIGN ====== */
+@media (max-width: 768px) {
+  #content {
+    margin: 20px auto;
+    padding: 30px 25px;
+    border-radius: 12px;
+  }
+  
+  h1 {
+    font-size: 2em;
+  }
+  
+  h2 {
+    font-size: 1.5em;
+    margin-top: 35px;
+  }
+  
+  .exploring, .finding, .insight, .idea {
+    padding: 14px 18px;
+    margin: 16px 0;
+  }
+  
+  .intro, .summary-box {
+    padding: 20px 22px;
+  }
+  
+  pre {
+    padding: 12px;
+    font-size: 0.85em;
+  }
+  
+  table {
+    font-size: 0.9em;
+  }
+  
+  th, td {
+    padding: 10px 12px;
+  }
+  
+  #TOC {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  #content {
+    padding: 20px 18px;
+    margin: 10px;
+  }
+  
+  h1 {
+    font-size: 1.75em;
+  }
+  
+  h2 {
+    font-size: 1.3em;
+  }
+  
+  .exploring, .finding, .insight, .idea {
+    padding: 12px 16px;
+  }
+  
+  .intro, .summary-box {
+    padding: 18px 20px;
+  }
+}
+
+/* ====== DARK MODE SUPPORT ====== */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background: linear-gradient(135deg, #1a1d2e 0%, #16213e 50%, #1a1a2e 100%);
+  }
+  
+  #content {
+    color: #e5e7eb;
+    background: rgba(30, 30, 45, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  
+  h1 {
+    color: #1ed760;
+    text-shadow: 0 2px 8px rgba(30, 215, 96, 0.3);
+  }
+  
+  h2 {
+    color: #1ed760;
+    border-bottom-color: rgba(30, 215, 96, 0.3);
+  }
+  
+  h3 {
+    color: #d1d5db;
+  }
+  
+  .exploring {
+    background: linear-gradient(135deg, rgba(55, 65, 81, 0.6), rgba(75, 85, 99, 0.5));
+    border-left-color: #818cf8;
+    color: #e5e7eb;
+  }
+  
+  .finding {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.5), rgba(37, 99, 235, 0.4));
+    border-left-color: #38bdf8;
+    color: #e5e7eb;
+  }
+  
+  .insight {
+    background: linear-gradient(135deg, rgba(6, 78, 59, 0.5), rgba(4, 120, 87, 0.4));
+    border-left-color: #1ed760;
+    color: #e5e7eb;
+  }
+  
+  .idea {
+    background: linear-gradient(135deg, rgba(120, 53, 15, 0.5), rgba(146, 64, 14, 0.4));
+    border-left-color: #fbbf24;
+    color: #e5e7eb;
+  }
+  
+  .intro {
+    background: linear-gradient(135deg, rgba(6, 78, 59, 0.4), rgba(4, 120, 87, 0.3));
+    border-left-color: #1ed760;
+    color: #e5e7eb;
+  }
+  
+  .summary-box {
+    background: linear-gradient(135deg, rgba(30, 30, 45, 0.8), rgba(37, 99, 235, 0.2));
+    border-color: rgba(30, 215, 96, 0.4);
+    color: #e5e7eb;
+  }
+  
+  .summary-box h3 {
+    color: #1ed760;
+    border-bottom-color: rgba(30, 215, 96, 0.3);
+  }
+  
+  .summary-box strong {
+    color: #1ed760;
+  }
+  
+  pre {
+    background: rgba(240, 245, 250, 0.95);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #1a1a1a;
+  }
+  
+  code {
+    background: rgba(230, 235, 245, 0.9);
+    color: #1a1a1a;
+  }
+  
+  pre code {
+    background: transparent;
+    color: #1a1a1a;
+  }
+  
+  table {
+    background: rgba(30, 30, 45, 0.7);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e5e7eb;
+  }
+  
+  th {
+    background: rgba(6, 78, 59, 0.3);
+    color: #1ed760;
+  }
+  
+  td {
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  tr:hover {
+    background: rgba(30, 215, 96, 0.08);
+  }
+  
+  a {
+    color: #1ed760;
+  }
+  
+  a:hover {
+    color: #1aa34a;
+  }
+  
+  #TOC {
+    background: rgba(30, 30, 45, 0.75);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+  
+  .tocify-header {
+    color: #1ed760;
+  }
+  
+  .tocify-item {
+    color: #d1d5db;
+  }
+  
+  .tocify-item:hover {
+    color: #1ed760;
+    background: rgba(30, 215, 96, 0.1);
+  }
+  
+  img {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+```
+
+<div id="content">
+
+# Spotify 2023 Streaming Analysis
+
+<div class="intro">
+**Statistical analysis of the most streamed songs on Spotify in 2023**
+
+Exploring patterns in music characteristics, streaming success, and temporal trends using R statistical methods. All insights are observational and do not imply causation.
+
+**Dataset:** [Most Streamed Spotify Songs 2023](https://www.kaggle.com/datasets/nelgiriyewithana/top-spotify-songs-2023/data) from [Kaggle](https://www.kaggle.com/)  
+**Tools:** R, ggplot2, dplyr, e1071
+</div>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 6,
+  fig.align = 'center'
+)
+```
+
+```{r load-packages, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(e1071)
+load("spotify-2023-clean.Rdata")
+```
+
+---
+
+## Executive Summary
+
+<div class="summary-box">
+
+### Key Findings at a Glance
+
+**Temporal Trend**  
+Songs released from 2020 onward show significantly higher danceability (p < 0.001), indicating a measurable shift in music production toward social listening contexts.
+
+**Tempo & Popularity**  
+Slower-tempo tracks (BPM < 100) achieve highest median streams, suggesting broad appeal across diverse listening scenarios including focus, relaxation, and background contexts.
+
+**Feature Relationships**  
+Energy and valence demonstrate moderate positive correlation (r ≈ 0.43). Danceability and valence show strongest correlation among analyzed features. BPM operates independently of mood-related metrics.
+
+**Mode Effects**  
+Major and minor modes create statistically robust differences in energy, danceability, and valence, surviving multiple testing corrections.
+
+**Top Content Profile**  
+The highest-streaming songs maintain moderate-to-high positivity (valence > 43%), establishing a baseline characteristic for commercially successful content.
+
+### Strategic Recommendations
+
+* Prioritize recent high-danceability content in discovery algorithms
+* Feature slower-tempo tracks in context-based playlists (study, focus, chill)
+* Leverage mode distinctions for emotional playlist curation
+* Maintain valence >40% threshold for broad-audience editorial selections
+* Keep BPM as independent preference filter due to weak correlation with mood features
+
+</div>
+
+---
+
+## Detailed Analysis
+
+## Danceability Distribution
+
+<div class="exploring">
+**Research Questions:**
+
+* What is the mean danceability level?
+* Which statistical distribution best describes danceability levels?
+</div>
+
+```{r danceability-analysis}
+summary(data)
+danceability_mean <- summary(data$danceability)[c("Mean")]
+danceability_median <- summary(data$danceability)[c("Median")]
+danceability_std <- sd(data$danceability)
+
+hist(data$danceability,
+     main = "Distribution of Danceability",
+     xlab = "Danceability (%)",
+     ylab = "Frequency",
+     col = "#1DB954",
+     border = "white",
+     breaks = 20)
+
+cat("Mean:", round(danceability_mean, 2), "\n")
+cat("Median:", round(danceability_median, 2), "\n")
+cat("Std Dev:", round(danceability_std, 2), "\n")
+cat("Skewness:", round(skewness(data$danceability), 2), "\n")
+```
+
+<div class="finding">
+**Findings:**
+
+* Mean danceability: *66.98%*
+* Distribution: *Left-skewed* (most songs have moderate-to-high danceability)
+</div>
+
+<div class="insight">
+**Insight:**
+
+The majority of 2023's top songs have medium-high danceability scores, suggesting Spotify is increasingly used in social and party contexts where danceable music is preferred.
+</div>
+
+<div class="idea">
+**Product Implication:**
+
+Curating and promoting more party-themed and workout playlists could align with user behavior and increase session length.
+</div>
+
+---
+
+## Energy vs. Valence Relationship
+
+<div class="exploring">
+**Research Questions:**
+
+* What is the relationship between energy and valence?
+* Do release years show any trend in this relationship?
+</div>
+
+```{r energy-valence}
+ggplot(data, aes(x = energy, y = valence, color = released_year)) +
+  geom_point(alpha = 0.6, size = 2) +
+  geom_smooth(method = lm, se = FALSE, color = "black", linewidth = 1.2) +
+  scale_color_gradient(low = "#FF6347", high = "#1DB954", name = "Release Year") +
+  labs(
+    title = "Energy vs. Valence Across Release Years",
+    x = "Energy (%)",
+    y = "Valence (Positivity %)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
+    legend.position = "right"
+  )
+
+cor_energy <- cor.test(data$energy, data$valence)
+cat("Correlation between energy and valence:", round(cor_energy$estimate, 3), "\n")
+cat("P-value:", format(cor_energy$p.value, scientific = TRUE), "\n")
+```
+
+<div class="finding">
+**Findings:**
+
+* *Positive correlation* between energy and valence (r ≈ 0.43)
+* No clear temporal trend across release years
+</div>
+
+<div class="insight">
+**Insight:**
+
+Energetic songs tend to be more positive, but the relationship is moderate. This suggests energy and valence capture different aspects of musical mood.
+</div>
+
+<div class="idea">
+**Product Implication:**
+
+Keep energy and valence as separate metrics in recommendation algorithms to capture nuanced mood preferences and improve playlist personalization.
+</div>
+
+---
+
+## BPM Impact on Streaming Success
+
+<div class="exploring">
+**Research Questions:**
+
+* Which BPM (Beats Per Minutes) category shows highest streaming numbers?
+* How does tempo relate to popularity?
+</div>
+
+```{r bpm-analysis}
+data <- mutate(data,
+  BPM_category = case_when(
+    bpm < 100 ~ "Slow",
+    bpm <= 120 ~ "Medium",
+    bpm > 120 ~ "Fast"
+  )
+)
+
+data$BPM_category <- factor(data$BPM_category, levels = c("Slow", "Medium", "Fast"))
+
+ggplot(data, aes(x = BPM_category, y = streams, fill = BPM_category)) +
+  geom_boxplot(alpha = 0.8, outlier.color = "#FF6347", outlier.size = 2) +
+  geom_hline(yintercept = median(data$streams[data$BPM_category=="Slow"]), linetype = "dotted") +
+  scale_fill_manual(
+    values = c("Slow" = "#1ed760", "Medium" = "#1ed760", "Fast" = "#1ed760")
+  ) +
+  scale_y_log10(labels = scales::comma) +
+  labs(
+    title = "Streaming Distribution by BPM Category",
+    x = "BPM Category",
+    y = "Number of Streams (log scale)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
+    legend.position = "none"
+  )
+```
+
+<div class="finding">
+**Findings:**
+
+* *Slow BPM* (<100) has highest median streams
+* Lower tempo consistently associated with higher popularity
+</div>
+
+<div class="insight">
+**Insight:**
+
+Slower-paced tracks dominate streaming success, possibly because they work well for diverse contexts (background listening, focus, relaxation).
+</div>
+
+<div class="idea">
+**Product Implication:**
+
+Feature slower-tempo tracks prominently in broad-audience playlists and context-based recommendations (study, chill, focus).
+</div>
+
+---
+
+## Audio Feature Correlation Analysis
+
+<div class="exploring">
+**Research Questions:**
+
+* Which audio features are most strongly correlated?
+* Which features show independence?
+</div>
+
+```{r correlation-analysis}
+correlation_matrix <- cor(
+  data[, c("danceability", "energy", "valence", "bpm")],
+  use = "complete.obs"
+)
+
+heatmap(correlation_matrix,
+  symm = TRUE,
+  main = "Audio Feature Correlation Heatmap",
+  col = colorRampPalette(c("white", "#1DB954"))(20),
+  margins = c(10, 10)
+)
+```
+
+<div class="finding">
+**Findings:**
+
+* **Strongest correlation:** Danceability ↔ Valence
+* **Weakest correlation:** BPM with other features
+</div>
+
+<div class="insight">
+**Insight:**
+
+Danceable songs tend to be more positive. BPM operates independently, meaning tempo preferences vary significantly across listeners regardless of other mood factors.
+</div>
+
+<div class="idea">
+**Product Implication:**
+
+Use danceability-valence correlation for mood-based playlist generation. Keep BPM as an independent filter for user preferences.
+</div>
+
+---
+
+## Temporal Trends: Danceability Over Time
+
+<div class="exploring">
+**Research Questions:**
+
+* Has danceability changed significantly over time?
+* Are songs from 2020+ more danceable?
+</div>
+
+```{r temporal-analysis}
+data <- mutate(data,
+  release_period = case_when(
+    released_year < 2020 ~ "Before 2020",
+    released_year >= 2020 ~ "2020 or later"
+  )
+)
+
+t_test_result <- t.test(danceability ~ release_period, data = data)
+
+boxplot(danceability ~ release_period,
+  data = data,
+  main = "Danceability: Before vs. After 2020",
+  xlab = "Release Period",
+  ylab = "Danceability (%)",
+  col = c("#FF6347", "#1DB954"),
+  border = "black",
+  horizontal = FALSE
+)
+
+cat("T-test p-value:", format(t_test_result$p.value, scientific = TRUE), "\n")
+cat("Mean (Before 2020):", round(t_test_result$estimate[1], 2), "\n")
+cat("Mean (2020+):", round(t_test_result$estimate[2], 2), "\n")
+```
+
+<div class="finding">
+**Findings:**
+
+* P-value: *6.15e-12* (highly significant)
+* Songs from 2020+ have *significantly higher danceability*
+</div>
+
+<div class="insight">
+**Insight:**
+
+There's a clear shift toward more danceable music in recent years, reflecting evolving listener preferences for energetic, social listening experiences.
+</div>
+
+<div class="idea">
+**Product Implication:**
+
+Update algorithmic weights to favor recent high-danceability tracks in discovery playlists to match current user preferences.
+</div>
+
+---
+
+## Major vs. Minor Mode Comparison
+
+<div class="exploring">
+**Research Questions:**
+
+* Do major and minor mode songs differ across multiple audio features?
+* Which differences remain significant after multiple testing correction?
+</div>
+
+```{r mode-analysis}
+variables <- c("energy", "danceability", "valence", "acousticness", 
+               "speechiness", "liveness", "bpm", "instrumentalness")
+
+my_t_test <- function(variable) {
+  t.test(data[[variable]] ~ data$mode)
+}
+
+t_test_results <- lapply(variables, my_t_test)
+p_values <- sapply(t_test_results, function(test) test$p.value)
+
+results <- data.frame(
+  Variable = variables,
+  P_Value = round(p_values, 5),
+  Bonferroni = round(p.adjust(p_values, method = "bonferroni"), 5),
+  BH = round(p.adjust(p_values, method = "BH"), 5)
+)
+
+knitr::kable(results, caption = "Multiple Testing Results: Major vs. Minor Mode")
+
+cat("\nSignificant tests (α = 0.05):\n")
+cat("Before correction:", sum(results$P_Value < 0.05), "\n")
+cat("After Bonferroni:", sum(results$Bonferroni < 0.05), "\n")
+cat("After BH:", sum(results$BH < 0.05), "\n")
+```
+
+<div class="finding">
+**Findings:**
+
+* *3 features* significant before correction
+* *2 features* remain significant after Bonferroni correction
+* Major mode songs show higher energy, danceability, and valence
+</div>
+
+<div class="insight">
+**Insight:**
+
+Musical mode creates robust differences in perceived mood and energy, even after strict statistical corrections.
+</div>
+
+<div class="idea">
+**Product Implication:**
+
+Use mode as a distinguishing factor: Major mode for upbeat/party playlists, Minor mode for emotional/calm playlists.
+</div>
+
+---
+
+## Top 100 Songs: Valence Analysis
+
+<div class="exploring">
+**Research Question:**
+
+* What is the typical positivity level of the most popular songs?
+</div>
+
+```{r bootstrap-analysis}
+top_100 <- data %>%
+  arrange(desc(streams)) %>%
+  slice(1:100)
+
+bootstrap_sample_mean <- function(data) {
+  bootstrap_sample <- sample(data, length(data), replace = TRUE)
+  return(mean(bootstrap_sample))
+}
+
+set.seed(123)
+bootstrap_means <- replicate(1000, bootstrap_sample_mean(top_100$valence))
+ci <- quantile(bootstrap_means, c(0.025, 0.975))
+
+hist(bootstrap_means,
+  main = "Bootstrap Distribution of Mean Valence (Top 100 Songs)",
+  xlab = "Mean Valence (%)",
+  col = "#1DB954",
+  border = "white",
+  breaks = 30
+)
+abline(v = ci, col = "#FF6347", lwd = 2, lty = 2)
+
+cat("95% Bootstrap Confidence Interval:\n")
+cat("Lower bound:", round(ci[1], 2), "%\n")
+cat("Upper bound:", round(ci[2], 2), "%\n")
+```
+
+<div class="finding">
+**Findings:**
+
+* 95% CI lower bound: *43.69%*
+* Top songs maintain moderate-to-high positivity
+</div>
+
+<div class="insight">
+**Insight:**
+
+The most streamed songs cluster around moderate-to-high valence, suggesting mainstream success favors emotionally positive content.
+</div>
+
+<div class="idea">
+**Product Implication:**
+
+Prioritize tracks with valence >40% in editorial playlists targeting broad audiences to maximize engagement.
+</div>
+
+---
+
+## Conclusions & Next Steps
+
+<div class="summary-box">
+
+### Strategic Insights Recap
+
+This analysis reveals five actionable patterns in 2023's top-streaming music:
+
+1. **Danceability is trending upward** — Modern releases show significantly higher scores
+2. **Slower tempo drives engagement** — BPM <100 correlates with higher streams
+3. **Energy-valence correlation exists but is moderate** — Both metrics provide value
+4. **Major mode signals upbeat content** — Statistically significant after corrections
+5. **Popular content clusters around positive valence** — Above 43% threshold
+
+### Recommended Next Steps
+
+**For Product Development:**
+
+* A/B test party-focused playlist promotions based on high-danceability filtering
+* Implement tempo-based segmentation in personalization algorithms
+* Build temporal trend dashboards for content strategy teams
+* Develop mode-aware playlist generation features
+
+**For Further Analysis:**
+
+* Investigate regional differences in danceability preferences
+* Analyze seasonal patterns in audio feature trends
+* Examine artist-level consistency across these metrics
+* Study playlist context impact on feature importance
+
+</div>
+
+</div>

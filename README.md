@@ -60,4 +60,4 @@ All analysis was performed in **R** and organized using **RMarkdown**, producing
 
 ## 🔗 Portfolio
 
-Explore more of my data analysis projects: [ShiriCodes GitHub](https://github.com/ShiriCodes/Portfolio)
+Explore more of my projects: [ShiriCodes GitHub](https://github.com/ShiriCodes/Portfolio)
